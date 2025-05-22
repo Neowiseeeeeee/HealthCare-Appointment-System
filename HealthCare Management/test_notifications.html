@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification Tester</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
+        <h1 class="text-2xl font-bold mb-6">Notification System Tester</h1>
+        
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold mb-2">Test Endpoints</h2>
+            <div class="space-y-2">
+                <button onclick="testEndpoint('api/test_notifications.php')" 
+                        class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+                    Test Notifications Endpoint
+                </button>
+                <button onclick="testEndpoint('api/check_upcoming_appointments.php')" 
+                        class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
+                    Test Appointment Reminders
+                </button>
+            </div>
+        </div>
+        
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold mb-2">Debug Information</h2>
+            <div class="bg-gray-800 text-green-400 p-4 rounded font-mono text-sm overflow-auto max-h-96">
+                <pre id="debugOutput">Click a button above to test the endpoints...</pre>
+            </div>
+        </div>
+        
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold mb-2">Test Data</h2>
+            <div class="bg-white border rounded p-4">
+                <h3 class="font-semibold mb-2">Create Test Notification</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">User ID</label>
+                        <input type="number" id="testUserId" class="w-full p-2 border rounded" value="1">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                        <input type="text" id="testMessage" class="w-full p-2 border rounded" value="This is a test notification">
+                    </div>
+                    <div class="md:col-span-2">
+                        <button onclick="createTestNotification()" 
+                                class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded">
+                            Create Test Notification
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold mb-2">Check Database</h2>
+            <div class="space-y-2">
+                <button onclick="checkTable('notifications')" 
+                        class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded">
+                    Check Notifications Table
+                </button>
+                <button onclick="checkTable('user_notifications')" 
+                        class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded">
+                    Check User Notifications Table
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    function testEndpoint(endpoint) {
+        const output = document.getElementById('debugOutput');
+        output.textContent = `Testing ${endpoint}...\n\n`;
+        
+        fetch(endpoint)
+            .then(response => response.json())
+            .then(data => {
+                output.textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                output.textContent = `Error: ${error.message}\n\n${error.stack}`;
+            });
+    }
+    
+    function createTestNotification() {
+        const userId = document.getElementById('testUserId').value;
+        const message = document.getElementById('testMessage').value;
+        const output = document.getElementById('debugOutput');
+        
+        output.textContent = 'Creating test notification...\n\n';
+        
+        fetch('api/create_test_notification.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `user_id=${encodeURIComponent(userId)}&message=${encodeURIComponent(message)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            output.textContent = JSON.stringify(data, null, 2);
+            if (data.success) {
+                // Test fetching the notification
+                testEndpoint('api/test_notifications.php');
+            }
+        })
+        .catch(error => {
+            output.textContent = `Error: ${error.message}\n\n${error.stack}`;
+        });
+    }
+    
+    function checkTable(tableName) {
+        const output = document.getElementById('debugOutput');
+        output.textContent = `Checking ${tableName}...\n\n`;
+        
+        fetch(`api/check_table.php?table=${encodeURIComponent(tableName)}`)
+            .then(response => response.json())
+            .then(data => {
+                output.textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                output.textContent = `Error: ${error.message}\n\n${error.stack}`;
+            });
+    }
+    </script>
+</body>
+</html>
